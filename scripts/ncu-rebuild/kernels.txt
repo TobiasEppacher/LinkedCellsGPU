@@ -1,0 +1,19 @@
+# The GPU kernels of every container rebuild. One line per implementation:
+#
+#   <label>   <algorithm for the config>   <binary, relative to the project root>   <kernel name pattern>
+#
+# The pattern is a regular expression matched against the mangled kernel name and
+# must match every kernel one rebuild launches, and nothing else. The first kernel
+# of every rebuild is the cell index update.
+#
+# Not listed: the kokkos-c01-* / -c08-* traversals rebuild with the kokkos-soa /
+# kokkos-aos containers, and 'cpu' has no GPU kernel at all. SYCL clears the cell
+# counts with a fill kernel; CUDA and Kokkos use a memset, which is no kernel.
+#
+
+kokkos-soa          kokkos-soa          build-kokkos/src/main      KokkosSoAContainer[0-9]+(updateCellIdx|sortByCellIdx|applyPermutation)
+kokkos-aos          kokkos-aos          build-kokkos/src/main      KokkosAoSContainer[0-9]+(updateCellIdx|sortByCellIdx|applyPermutation)
+cuda-soa            cuda-soa            build-cuda/src/main        cudaUpdateCellIdxKernel|cudaCountCellsKernel|DeviceScan|cudaScatterPermKernel|cudaApplyPermutationSoAKernel
+cuda-aos            cuda-aos            build-cuda/src/main        cudaUpdateCellIdxAoSKernel|cudaCountCellsKernel|DeviceScan|cudaScatterPermKernel|cudaApplyPermutationAoSKernel
+sycl-soa            sycl-soa            build-sycl-cuda/src/main   SyclSoAContainer[0-9]+(updateCellIdx|sortByCellIdx|exclusiveScan|applyPermutation)|fill_kernel_usm
+sycl-aos            sycl-aos            build-sycl-cuda/src/main   SyclAoSContainer[0-9]+(updateCellIdx|sortByCellIdx|exclusiveScan|applyPermutation)|fill_kernel_usm

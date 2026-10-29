@@ -1,0 +1,9 @@
+/build-kokkos/
+/build-cuda/
+/build-sycl-cuda/
+/build-sycl-generic/
+
+/output/**/*.vtk
+/output/**/*.vti
+
+/scripts/*/out/

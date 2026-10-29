@@ -1,0 +1,22 @@
+# Workload used by ncu-traversal.sh. The script overwrites the 'algorithm' line
+# and the size (from CELLS/PARTICLES), everything else is shared so all
+# implementations do the same work.
+# 125 000 random particles (fixed seed) in a 16 x 16 x 16 domain -> 16^3 interior cells.
+# end_t == delta_t means exactly one force calculation is run.
+delta_t: 0.01
+end_t: 0.01
+domain_size: [16.0, 16.0, 16.0]
+interaction_radius: 1.0
+epsilon: 1.0
+sigma: 0.4
+
+algorithm: cuda-soa
+functor: lj
+only_forces: true
+output_vtk_files: false
+
+initializers:
+  - type: random
+    num_particles: 125000
+    box_min: [0.001, 0.001, 0.001]
+    box_max: [15.999, 15.999, 15.999]

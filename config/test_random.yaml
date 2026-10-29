@@ -1,0 +1,19 @@
+# Test config: random initializer (uniform particles in the domain box).
+# end_t / delta_t = 10 force-only iterations.
+delta_t: 0.01
+end_t: 0.1
+domain_size: [10.0, 10.0, 10.0]
+interaction_radius: 1.0
+epsilon: 1.0
+sigma: 0.4
+
+algorithm: cpu
+functor: lj
+only_forces: true
+output_vtk_files: false
+
+initializers:
+  - type: random
+    num_particles: 1000
+    box_min: [0.0, 0.0, 0.0]
+    box_max: [10.0, 10.0, 10.0]

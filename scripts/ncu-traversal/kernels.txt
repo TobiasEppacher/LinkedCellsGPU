@@ -1,0 +1,24 @@
+# The GPU force kernel of every implementation. One line per implementation:
+#
+#   <label>   <algorithm for the config>   <binary, relative to the project root>   <kernel name pattern>
+#
+# The pattern is a regular expression matched against the mangled kernel name.
+# ncu-traversal.sh appends ".*<functor type>" to it, so exactly one kernel matches.
+# "ParallelFor" keeps the Kokkos helper parallel_reduce kernels out.
+#
+# Not listed: 'cpu' has no GPU kernel at all.
+#
+
+kokkos-soa              kokkos-soa              build-kokkos/src/main        ParallelFor.*KokkosSoATraversal.*applyPairwise
+kokkos-soa-newton3      kokkos-soa-newton3      build-kokkos/src/main        ParallelFor.*KokkosSoANewton3Traversal.*applyPairwise
+kokkos-aos              kokkos-aos              build-kokkos/src/main        ParallelFor.*KokkosAoSTraversal.*applyPairwise
+kokkos-c01-soa          kokkos-c01-soa          build-kokkos/src/main        ParallelFor.*KokkosC01SoATraversal.*applyPairwise
+kokkos-c01-aos          kokkos-c01-aos          build-kokkos/src/main        ParallelFor.*KokkosC01AoSTraversal.*applyPairwise
+kokkos-c01-scratch-soa  kokkos-c01-scratch-soa  build-kokkos/src/main        ParallelFor.*KokkosC01ScratchSoATraversal.*applyPairwise
+kokkos-c01-scratch-aos  kokkos-c01-scratch-aos  build-kokkos/src/main        ParallelFor.*KokkosC01ScratchAoSTraversal.*applyPairwise
+kokkos-c08-soa          kokkos-c08-soa          build-kokkos/src/main        ParallelFor.*KokkosC08SoATraversal.*applyPairwise
+kokkos-c08-scratch-soa  kokkos-c08-scratch-soa  build-kokkos/src/main        ParallelFor.*KokkosC08ScratchSoATraversal.*applyPairwise
+cuda-soa                cuda-soa                build-cuda/src/main          cudaForceSoAKernel
+cuda-aos                cuda-aos                build-cuda/src/main          cudaForceAoSKernel
+sycl-soa                sycl-soa                build-sycl-cuda/src/main     SyclSoATraversal.*applyPairwise
+sycl-aos                sycl-aos                build-sycl-cuda/src/main     SyclAoSTraversal.*applyPairwise
