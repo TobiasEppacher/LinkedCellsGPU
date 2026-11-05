@@ -1,9 +1,20 @@
-/build-kokkos/
-/build-cuda/
-/build-sycl-cuda/
-/build-sycl-generic/
+# Build directories (scripts/build/build.sh creates build-<backend>/)
+/build/
+/build-*/
 
+# Artifacts of an in-source CMake configure
+/CMakeCache.txt
+/CMakeFiles/
+/_deps/
+/cmake_install.cmake
+/Makefile
+/CTestTestfile.cmake
+/compile_commands.json
+
+# Simulation output
 /output/**/*.vtk
 /output/**/*.vti
+/testoutput/
 
+# Script output
 /scripts/*/out/
