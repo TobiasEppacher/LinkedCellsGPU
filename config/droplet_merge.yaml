@@ -1,0 +1,33 @@
+# Two Lennard-Jones liquid blocks merging into one droplet, meant for ParaView.
+# Reduced LJ units (epsilon = sigma = mass = 1), cutoff 2.5 sigma.
+#
+# Two 10 x 10 x 10 simple cubic lattices (2000 particles) with spacing 1.015 sigma,
+# 1.2 sigma apart. The lattice is slightly denser than the liquid; relaxing it heats
+# the blocks to T ~ 0.6 (liquid), so they melt, form a liquid bridge, and neck into
+# one droplet while a few particles evaporate. Velocities stay below ~4 sigma per
+# time unit, so nothing explodes.
+#
+# end_t / delta_t = 2500 timesteps, one VTK snapshot each (~230 KB per snapshot).
+# Each build compiles different algorithms: set kokkos-soa, cuda-soa or sycl-soa.
+delta_t: 0.01
+end_t: 25.0
+domain_size: [30.0, 30.0, 30.0]
+interaction_radius: 2.5
+epsilon: 1.0
+sigma: 1.0
+
+algorithm: kokkos-soa
+functor: lj
+only_forces: false
+output_vtk_files: true
+output_dir: "./output/droplet_merge"
+
+initializers:
+  - type: cuboid
+    box_min: [5.265, 10.433, 10.433]
+    box_max: [14.400, 19.568, 19.568]
+    grid_counts: [10, 10, 10]
+  - type: cuboid
+    box_min: [15.600, 10.433, 10.433]
+    box_max: [24.735, 19.568, 19.568]
+    grid_counts: [10, 10, 10]
