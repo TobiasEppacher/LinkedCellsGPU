@@ -12,8 +12,7 @@
 /compile_commands.json
 
 # Simulation output
-/output/**/*.vtk
-/output/**/*.vti
+/output/
 /testoutput/
 
 # Script output
