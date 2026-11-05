@@ -1,32 +1,79 @@
 # LinkedCellsGPU
 
-A linked-cells molecular dynamics simulation (short-range pairwise forces, e.g.
+<!-- TODO: replace THESIS_URL with the link to the thesis once it is available -->
+[![Master's Thesis: Linked Cells Algorithms for GPU](https://img.shields.io/badge/Master's%20Thesis-Linked%20Cells%20Algorithms%20for%20GPU-0065BD?style=for-the-badge)](THESIS_URL)
+
+This is the code base of my master's thesis *Linked Cells Algorithms for GPU*
+(Technical University of Munich, Chair of Scientific Computing). It is a simplified
+linked-cells molecular dynamics simulation (short-range pairwise forces, e.g.
 Lennard-Jones) implemented on the GPU with three programming models — Kokkos,
 native CUDA and SYCL (AdaptiveCpp) — sharing one code base, so the backends,
 memory layouts (SoA / AoS) and traversal strategies can be compared directly.
+Since the focus was comparison of a bigger amount of force calculation traversals and containers, 
+the simulation itself is kept simple: no thermostats, no periodic boundaries, no MPI, no neighbor lists, and only one force functor (Lennard-Jones) plus three synthetic ones for testing.
+We give a short overview here, but for more information see the thesis.
+
+## Background: Linked Cells on the GPU
+
+Molecular dynamics (MD) integrates Newton's equations of motion for N particles
+over many timesteps, and computing the pairwise forces dominates the runtime.
+For short-range potentials such as Lennard-Jones, the force is negligible beyond
+a cutoff radius r<sub>c</sub>. The direct sum still checks every pair, O(N²).
+**Linked Cells** sorts the particles into cells of size r<sub>c</sub>, so only
+the neighboring cells have to be searched, which scales with O(N):
+
+<p align="center">
+  <img src="docs/figures/md-direct.svg" alt="Direct sum: all pairs are checked" width="280">
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="docs/figures/md-linked.svg" alt="Linked Cells: only the neighbor cells are checked" width="280">
+  <br><em>Direct sum (left) vs. Linked Cells (right): only the pairs inside the cutoff (orange) contribute.</em>
+</p>
+
+A GPU trades the few complex cores of a CPU for thousands of simple ones and a
+much wider memory bus, but it needs tens of thousands of independent threads and
+coalesced memory accesses to be busy. The classic CPU traversals (LC01, LC08 with
+coloring and Newton's third law) are therefore adapted: all particles live in one
+flat array, sorted by cell with a counting sort, and an offset array gives each
+cell's range. The **particle-based traversal** runs one thread per particle,
+which reads the 27 neighbor cells and writes only its own force:
+
+<p align="center">
+  <img src="docs/figures/particle-based.svg" alt="Particle-based traversal: one thread per particle reads its neighborhood" width="480">
+</p>
+
+Measured on an RTX 3080 over 60 setups (particle count × cell count), the
+simplest approach performed best:
+
+- The particle-based traversal is the fastest in 57 of 60 setups; grouping
+  threads by cell, shared memory and Newton3 with atomics all cost more in
+  coordination than they save in work.
+- SoA beats AoS by 1.09–1.47×, and 32 bit is up to 26× faster than 64 bit on
+  this consumer GPU.
+- Kokkos, CUDA and SYCL perform within a few percent of each other.
+
+<p align="center">
+  <img src="docs/figures/pairwise-particle-vs-cell-based.svg" alt="Force calculation time of all traversals per cell count" width="760">
+  <br><em>Force calculation time of the traversals (Kokkos, SoA, 32 bit) against the CPU reference.</em>
+</p>
+
+<p align="center">
+  <img src="docs/figures/speedup-summary.svg" alt="Summary of the speedups of all comparisons" width="520">
+  <br><em>All comparisons: geometric mean, quartiles and range over the measured setups.</em>
+</p>
 
 ## Repository contents
 
 ```
-CMakeLists.txt        top-level build: backend selection, fetches fkYAML and Kokkos
+CMakeLists.txt     top-level build: backend selection, fetches fkYAML and Kokkos
 src/
-  main.cpp            entry point: reads a YAML config and runs the simulation
-  simulation/         Simulation.hpp: picks container + traversal for the configured algorithm
-  container/          particle containers per backend, SoA and AoS variants (+ a CPU AoS reference)
-  traversal/          pairwise force traversals per backend (particle-based, C01, C08, scratch variants)
-  functors/           pairwise force functors (Lennard-Jones and synthetic workloads) and unary
-                      functors (force reset, time integration with reflecting boundaries)
-  initializer/        particle placement: random (fixed seed) and cuboid lattice
-  io/                 YAML config loader and parameter types
-  particle/           the Particle struct
-  util/               type definitions (32/64 bit), profiler, VTK writer, backend helpers
-test/                 one force test per backend, checked against an O(N^2) reference (CTest)
-benchmarks/sorting/   standalone Kokkos sorting benchmark (kokkos backend only)
-config/               example configs (test_grid.yaml, test_random.yaml)
-scripts/
-  build/build.sh      configures and builds all backends
-  ncu-traversal/      Nsight Compute operation counts of the force kernels
-  ncu-rebuild/        Nsight Compute operation counts of the container rebuild kernels
+  container/       particle containers per backend (SoA / AoS), sorted by cell
+  traversal/       force traversals per backend (particle-based, LC01, LC08, shared memory variants)
+  functors/        Lennard-Jones and synthetic force functors, time integration
+  simulation/      picks container and traversal for the configured algorithm
+test/              force test per backend against an O(N²) reference
+config/            example configs
+scripts/           build script and Nsight Compute profiling scripts
+docs/figures/      figures of this README
 ```
 
 ## Backends
